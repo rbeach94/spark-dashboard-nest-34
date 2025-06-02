@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
 import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
@@ -34,8 +35,9 @@ const SortableButton = ({ button, buttonColor, buttonTextColor, onDelete, onButt
         <GripVertical className="h-5 w-5 text-gray-500" />
       </button>
       <Button
-        className="flex-1 bg-black hover:bg-black/90"
+        className="flex-1 hover:opacity-90"
         style={{ 
+          backgroundColor: buttonColor,
           color: buttonTextColor
         }}
         onClick={() => onButtonClick(button)}
@@ -44,7 +46,10 @@ const SortableButton = ({ button, buttonColor, buttonTextColor, onDelete, onButt
       </Button>
       <Button
         variant="destructive"
-        onClick={() => onDelete(button.id)}
+        onClick={() => {
+          console.log('Deleting button:', button.id, button.label);
+          onDelete(button.id);
+        }}
       >
         Delete
       </Button>

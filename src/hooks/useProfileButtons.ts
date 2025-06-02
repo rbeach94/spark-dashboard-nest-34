@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
-import { cleanupProfileButtons } from "@/utils/buttonCleanup";
 
 export const useProfileButtons = (profileId: string) => {
   const queryClient = useQueryClient();
@@ -76,19 +75,43 @@ export const useProfileButtons = (profileId: string) => {
 
   const deleteButton = useMutation({
     mutationFn: async (buttonId: string) => {
-      const { error } = await supabase
+      console.log('Attempting to delete button:', buttonId);
+      
+      // First check if the button exists
+      const { data: existingButton, error: fetchError } = await supabase
+        .from('profile_buttons')
+        .select('*')
+        .eq('id', buttonId)
+        .single();
+
+      if (fetchError) {
+        console.error('Error fetching button before deletion:', fetchError);
+        throw new Error('Button not found');
+      }
+
+      console.log('Button found:', existingButton);
+
+      // Now attempt to delete
+      const { error: deleteError } = await supabase
         .from('profile_buttons')
         .delete()
         .eq('id', buttonId);
-      if (error) throw error;
+        
+      if (deleteError) {
+        console.error('Error deleting button:', deleteError);
+        throw deleteError;
+      }
+
+      console.log('Button deleted successfully:', buttonId);
     },
-    onSuccess: () => {
+    onSuccess: (_, buttonId) => {
+      console.log('Delete mutation successful for button:', buttonId);
       queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Button deleted successfully!");
     },
     onError: (error) => {
-      console.error('Error deleting button:', error);
-      toast.error("Failed to delete button");
+      console.error('Delete mutation error:', error);
+      toast.error(`Failed to delete button: ${error.message}`);
     },
   });
 
@@ -118,20 +141,6 @@ export const useProfileButtons = (profileId: string) => {
     },
   });
 
-  const cleanupButtons = useMutation({
-    mutationFn: async () => {
-      return await cleanupProfileButtons(profileId);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
-      toast.success("Profile buttons cleaned up successfully!");
-    },
-    onError: (error) => {
-      console.error('Error cleaning up buttons:', error);
-      toast.error("Failed to cleanup buttons");
-    },
-  });
-
   return {
     buttons,
     isLoading,
@@ -139,6 +148,5 @@ export const useProfileButtons = (profileId: string) => {
     addButton,
     deleteButton,
     reorderButtons,
-    cleanupButtons,
   };
 };
