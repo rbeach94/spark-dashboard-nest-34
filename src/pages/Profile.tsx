@@ -10,7 +10,6 @@ import { ButtonForm } from "@/components/profile/ButtonForm";
 import { LogoUpload } from "@/components/profile/LogoUpload";
 import { useProfileData } from "@/hooks/useProfileData";
 import { Tables } from "@/integrations/supabase/types";
-import { useEffect } from "react";
 
 const Profile = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,19 +28,7 @@ const Profile = () => {
     addButton,
     deleteButton,
     reorderButtons,
-    cleanupButtons,
   } = useProfileData(id);
-
-  // Auto-cleanup for the specific problematic profile
-  useEffect(() => {
-    if (profile?.id === 'c26456c9-7796-4d04-898b-3620424852c4' && buttons) {
-      const problematicButton = buttons.find(b => b.id === 'b0cac137-5cde-4591-abeb-fe64f1fb80ca');
-      if (problematicButton) {
-        console.log('Found problematic button, running cleanup...');
-        cleanupButtons.mutate();
-      }
-    }
-  }, [profile?.id, buttons, cleanupButtons]);
 
   const handleButtonClick = (button: Tables<"profile_buttons">) => {
     switch (button.action_type) {
