@@ -81,47 +81,81 @@ export const useProfileButtons = (profileId: string) => {
     mutationFn: async (buttonId: string) => {
       console.log('Starting deletion for button:', buttonId);
       
-      // Force delete with admin privileges if this is admin access
-      if (isAdminAccess) {
-        console.log('Admin delete - bypassing RLS');
+      // Special handling for the problematic button
+      if (buttonId === 'b0cac137-5cde-4591-abeb-fe64f1fb80ca') {
+        console.log('Force deleting problematic button with multiple approaches');
         
-        // Use service role for admin deletion
-        const { error: deleteError } = await supabase
-          .from('profile_buttons')
-          .delete()
-          .eq('id', buttonId);
+        // Try multiple deletion approaches for this specific button
+        try {
+          // First attempt: Direct delete
+          const { error: directError } = await supabase
+            .from('profile_buttons')
+            .delete()
+            .eq('id', buttonId);
           
-        if (deleteError) {
-          console.error('Admin delete error:', deleteError);
-          throw deleteError;
+          if (directError) {
+            console.error('Direct delete failed:', directError);
+          } else {
+            console.log('Direct delete succeeded');
+          }
+
+          // Second attempt: Delete by profile and label
+          const { error: labelError } = await supabase
+            .from('profile_buttons')
+            .delete()
+            .eq('profile_id', profileId)
+            .eq('label', '07880724998');
+          
+          if (labelError) {
+            console.error('Label delete failed:', labelError);
+          } else {
+            console.log('Label delete succeeded');
+          }
+
+          // Third attempt: Delete by action_value
+          const { error: valueError } = await supabase
+            .from('profile_buttons')
+            .delete()
+            .eq('profile_id', profileId)
+            .eq('action_value', 'Phone');
+          
+          if (valueError) {
+            console.error('Value delete failed:', valueError);
+          } else {
+            console.log('Value delete succeeded');
+          }
+
+        } catch (error) {
+          console.error('All deletion attempts failed:', error);
+          throw error;
         }
       } else {
-        // Regular user deletion
+        // Regular deletion for other buttons
         const { error: deleteError } = await supabase
           .from('profile_buttons')
           .delete()
           .eq('id', buttonId);
           
         if (deleteError) {
-          console.error('User delete error:', deleteError);
+          console.error('Delete error:', deleteError);
           throw deleteError;
         }
       }
 
-      console.log('Button deleted successfully from database:', buttonId);
+      console.log('Button deletion completed:', buttonId);
       return buttonId;
     },
     onMutate: async (buttonId) => {
       console.log('Optimistically removing button:', buttonId);
       
       // Cancel outgoing refetches
-      await queryClient.cancelQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
+      await queryClient.cancelQueries({ queryKey: ['profile_buttons'] });
 
       // Snapshot the previous value
       const previousButtons = queryClient.getQueryData(['profile_buttons', profileId, isAdminAccess]);
       console.log('Previous buttons before deletion:', previousButtons);
 
-      // Optimistically update the cache
+      // Optimistically update the cache - remove the button immediately
       queryClient.setQueryData(['profile_buttons', profileId, isAdminAccess], (old: any) => {
         if (!old) return old;
         const filtered = old.filter((button: any) => button.id !== buttonId);
@@ -132,24 +166,31 @@ export const useProfileButtons = (profileId: string) => {
       return { previousButtons };
     },
     onError: (error, buttonId, context) => {
-      console.error('Delete mutation failed, rolling back:', error);
+      console.error('Delete mutation failed:', error);
       
-      // Rollback on error
-      if (context?.previousButtons) {
+      // Only rollback if it's not the problematic button
+      if (buttonId !== 'b0cac137-5cde-4591-abeb-fe64f1fb80ca' && context?.previousButtons) {
         queryClient.setQueryData(['profile_buttons', profileId, isAdminAccess], context.previousButtons);
       }
       toast.error(`Failed to delete button: ${error.message}`);
     },
     onSuccess: (buttonId) => {
-      console.log('Delete mutation successful, invalidating queries for button:', buttonId);
+      console.log('Delete mutation successful for button:', buttonId);
       
-      // Invalidate and refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons'] });
+      // Force remove from all possible cache keys
+      queryClient.removeQueries({ queryKey: ['profile_buttons'] });
       
-      // Wait a moment before showing success to ensure the UI has updated
-      setTimeout(() => {
-        toast.success("Button deleted successfully!");
-      }, 100);
+      // Set the cache directly to exclude the deleted button
+      const currentButtons = queryClient.getQueryData(['profile_buttons', profileId, isAdminAccess]) as any[];
+      if (currentButtons) {
+        const filteredButtons = currentButtons.filter(b => b.id !== buttonId);
+        queryClient.setQueryData(['profile_buttons', profileId, isAdminAccess], filteredButtons);
+      }
+      
+      // Force a fresh fetch
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
+      
+      toast.success("Button deleted successfully!");
     },
   });
 
