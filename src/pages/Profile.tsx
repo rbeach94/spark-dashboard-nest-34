@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { ProfileForm } from "@/components/profile/ProfileForm";
 import { ProfileHeader } from "@/components/profile/ProfileHeader";
 import { ProfileButtons } from "@/components/profile/ProfileButtons";
@@ -22,6 +23,7 @@ const Profile = () => {
     addButton,
     deleteButton,
     reorderButtons,
+    cleanupButtons,
   } = useProfileData(id);
 
   const handleButtonClick = (button: Tables<"profile_buttons">) => {
@@ -84,6 +86,24 @@ const Profile = () => {
             isLoading={isLoading}
             error={error}
           />
+
+          {/* Debug cleanup button - only show for the specific profile */}
+          {profile?.id === 'c26456c9-7796-4d04-898b-3620424852c4' && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Profile Maintenance</h3>
+              <p className="text-yellow-700 mb-3">
+                This profile has a problematic button that needs cleanup.
+              </p>
+              <Button
+                onClick={() => cleanupButtons.mutate()}
+                disabled={cleanupButtons.isPending}
+                variant="outline"
+                className="border-yellow-300 text-yellow-800 hover:bg-yellow-100"
+              >
+                {cleanupButtons.isPending ? 'Cleaning up...' : 'Cleanup Profile Buttons'}
+              </Button>
+            </div>
+          )}
 
           <LogoUpload
             profileId={profile.id}

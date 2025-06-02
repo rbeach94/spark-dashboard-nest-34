@@ -1,3 +1,4 @@
+
 import { useProfile } from "./useProfile";
 import { useProfileButtons } from "./useProfileButtons";
 
@@ -15,7 +16,8 @@ export const useProfileData = (id: string) => {
     error: buttonsError,
     addButton,
     deleteButton,
-    reorderButtons
+    reorderButtons,
+    cleanupButtons
   } = useProfileButtons(id);
 
   return {
@@ -27,5 +29,6 @@ export const useProfileData = (id: string) => {
     addButton,
     deleteButton,
     reorderButtons,
+    cleanupButtons,
   };
 };

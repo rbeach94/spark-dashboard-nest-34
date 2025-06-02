@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Tables } from "@/integrations/supabase/types";
+import { cleanupProfileButtons } from "@/utils/buttonCleanup";
 
 export const useProfileButtons = (profileId: string) => {
   const queryClient = useQueryClient();
@@ -96,6 +97,20 @@ export const useProfileButtons = (profileId: string) => {
     },
   });
 
+  const cleanupButtons = useMutation({
+    mutationFn: async () => {
+      return await cleanupProfileButtons(profileId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      toast.success("Profile buttons cleaned up successfully!");
+    },
+    onError: (error) => {
+      console.error('Error cleaning up buttons:', error);
+      toast.error("Failed to cleanup buttons");
+    },
+  });
+
   return {
     buttons,
     isLoading,
@@ -103,5 +118,6 @@ export const useProfileButtons = (profileId: string) => {
     addButton,
     deleteButton,
     reorderButtons,
+    cleanupButtons,
   };
 };
