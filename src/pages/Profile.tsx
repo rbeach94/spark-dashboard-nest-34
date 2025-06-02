@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { ButtonForm } from "@/components/profile/ButtonForm";
 import { LogoUpload } from "@/components/profile/LogoUpload";
 import { useProfileData } from "@/hooks/useProfileData";
 import { Tables } from "@/integrations/supabase/types";
+import { useEffect } from "react";
 
 const Profile = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,6 +27,17 @@ const Profile = () => {
     reorderButtons,
     cleanupButtons,
   } = useProfileData(id);
+
+  // Auto-cleanup for the specific problematic profile
+  useEffect(() => {
+    if (profile?.id === 'c26456c9-7796-4d04-898b-3620424852c4' && buttons) {
+      const problematicButton = buttons.find(b => b.id === 'b0cac137-5cde-4591-abeb-fe64f1fb80ca');
+      if (problematicButton) {
+        console.log('Found problematic button, running cleanup...');
+        cleanupButtons.mutate();
+      }
+    }
+  }, [profile?.id, buttons, cleanupButtons]);
 
   const handleButtonClick = (button: Tables<"profile_buttons">) => {
     switch (button.action_type) {
@@ -86,24 +99,6 @@ const Profile = () => {
             isLoading={isLoading}
             error={error}
           />
-
-          {/* Debug cleanup button - only show for the specific profile */}
-          {profile?.id === 'c26456c9-7796-4d04-898b-3620424852c4' && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-yellow-800 mb-2">Profile Maintenance</h3>
-              <p className="text-yellow-700 mb-3">
-                This profile has a problematic button that needs cleanup.
-              </p>
-              <Button
-                onClick={() => cleanupButtons.mutate()}
-                disabled={cleanupButtons.isPending}
-                variant="outline"
-                className="border-yellow-300 text-yellow-800 hover:bg-yellow-100"
-              >
-                {cleanupButtons.isPending ? 'Cleaning up...' : 'Cleanup Profile Buttons'}
-              </Button>
-            </div>
-          )}
 
           <LogoUpload
             profileId={profile.id}
