@@ -17,7 +17,6 @@ export const useProfileData = (id: string) => {
     addButton,
     deleteButton,
     reorderButtons,
-    cleanupButtons
   } = useProfileButtons(id);
 
   return {
@@ -29,6 +28,5 @@ export const useProfileData = (id: string) => {
     addButton,
     deleteButton,
     reorderButtons,
-    cleanupButtons,
   };
 };
