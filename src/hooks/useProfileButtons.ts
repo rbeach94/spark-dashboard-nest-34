@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,9 +8,29 @@ import { cleanupProfileButtons } from "@/utils/buttonCleanup";
 export const useProfileButtons = (profileId: string) => {
   const queryClient = useQueryClient();
 
+  // Check if this is admin access
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminAccess = urlParams.get('admin') === 'true';
+
   const { data: buttons, isLoading, error } = useQuery({
-    queryKey: ['profile_buttons', profileId],
+    queryKey: ['profile_buttons', profileId, isAdminAccess],
     queryFn: async () => {
+      // For admin access, verify admin permissions
+      if (isAdminAccess) {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Not authenticated');
+        
+        const { data: userRole } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (userRole?.role !== 'admin') {
+          throw new Error('Insufficient permissions');
+        }
+      }
+
       const { data, error } = await supabase
         .from('profile_buttons')
         .select('*')
@@ -44,7 +65,7 @@ export const useProfileButtons = (profileId: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Button added successfully!");
     },
     onError: (error) => {
@@ -62,7 +83,7 @@ export const useProfileButtons = (profileId: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Button deleted successfully!");
     },
     onError: (error) => {
@@ -88,7 +109,7 @@ export const useProfileButtons = (profileId: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Buttons reordered successfully!");
     },
     onError: (error) => {
@@ -102,7 +123,7 @@ export const useProfileButtons = (profileId: string) => {
       return await cleanupProfileButtons(profileId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Profile buttons cleaned up successfully!");
     },
     onError: (error) => {

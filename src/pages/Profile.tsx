@@ -16,6 +16,10 @@ const Profile = () => {
   const { id } = useParams<{ id: string }>();
   if (!id) return null;
 
+  // Check if this is an admin accessing the profile
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminAccess = urlParams.get('admin') === 'true';
+
   const {
     profile,
     buttons,
@@ -94,6 +98,15 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto py-12 px-4">
         <div className="max-w-4xl mx-auto space-y-8">
+          {isAdminAccess && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-blue-800 mb-2">Admin Mode</h3>
+              <p className="text-blue-700">
+                You are editing this profile as an administrator.
+              </p>
+            </div>
+          )}
+
           <ProfileHeader 
             profile={profile}
             isLoading={isLoading}

@@ -1,7 +1,9 @@
+
 import { NFCCode } from "@/pages/AdminDashboard";
 import NFCCodeManagement from "./NFCCodeManagement";
 import ReviewCodeManagement from "./ReviewCodeManagement";
 import { UserManagementCard } from "./UserManagementCard";
+import { ProfileManagementCard } from "./ProfileManagementCard";
 import RecentActivatedCodesCard from "./RecentActivatedCodesCard";
 
 interface AdminDashboardContentProps {
@@ -48,6 +50,8 @@ export const AdminDashboardContent = ({
         onGenerateCodes={onGenerateReviewCodes}
         onDownloadCSV={onDownloadReviewCSV}
       />
+
+      <ProfileManagementCard />
 
       <UserManagementCard 
         users={users} 

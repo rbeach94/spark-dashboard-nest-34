@@ -1,4 +1,5 @@
-import { Navigate } from "react-router-dom";
+
+import { Navigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
@@ -9,6 +10,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps) => {
+  const location = useLocation();
+  
   const { data: session } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
@@ -43,6 +46,15 @@ const ProtectedRoute = ({ children, requireAdmin = false }: ProtectedRouteProps)
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
+  }
+
+  // Check if this is an admin accessing a profile
+  const isProfileRoute = location.pathname.startsWith('/profile/');
+  const isAdminAccess = new URLSearchParams(location.search).get('admin') === 'true';
+  
+  // Allow admin access to any profile
+  if (isProfileRoute && isAdminAccess && userRole === 'admin') {
+    return <div className="page-transition">{children}</div>;
   }
 
   if (requireAdmin && userRole !== "admin") {
