@@ -64,6 +64,9 @@ export const useProfileButtons = (profileId: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
+      // Invalidate multiple query keys to ensure refresh
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons'] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
       queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
       toast.success("Button added successfully!");
     },
@@ -103,15 +106,38 @@ export const useProfileButtons = (profileId: string) => {
       }
 
       console.log('Button deleted successfully:', buttonId);
+      return buttonId;
     },
-    onSuccess: (_, buttonId) => {
-      console.log('Delete mutation successful for button:', buttonId);
-      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
-      toast.success("Button deleted successfully!");
+    onMutate: async (buttonId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
+
+      // Snapshot the previous value
+      const previousButtons = queryClient.getQueryData(['profile_buttons', profileId, isAdminAccess]);
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['profile_buttons', profileId, isAdminAccess], (old: any) => {
+        if (!old) return old;
+        return old.filter((button: any) => button.id !== buttonId);
+      });
+
+      return { previousButtons };
     },
-    onError: (error) => {
+    onError: (error, buttonId, context) => {
+      // Rollback on error
+      if (context?.previousButtons) {
+        queryClient.setQueryData(['profile_buttons', profileId, isAdminAccess], context.previousButtons);
+      }
       console.error('Delete mutation error:', error);
       toast.error(`Failed to delete button: ${error.message}`);
+    },
+    onSuccess: (buttonId) => {
+      console.log('Delete mutation successful for button:', buttonId);
+      // Invalidate and refetch to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons'] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId] });
+      queryClient.invalidateQueries({ queryKey: ['profile_buttons', profileId, isAdminAccess] });
+      toast.success("Button deleted successfully!");
     },
   });
 
