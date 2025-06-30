@@ -1,10 +1,12 @@
+
 import { Button } from "@/components/ui/button";
 import { Tables } from "@/integrations/supabase/types";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { BasicProfileInfo } from "./BasicProfileInfo";
 import { ContactInfo } from "./ContactInfo";
 import { SocialMediaLinks } from "./SocialMediaLinks";
 import { ColorPickerSection } from "./ColorPickerSection";
+import { YouTubeEmbedSection } from "./YouTubeEmbedSection";
 import { Link } from "react-router-dom";
 
 interface ProfileFormProps {
@@ -23,6 +25,7 @@ export const ProfileForm = ({
   setShowColorPicker 
 }: ProfileFormProps) => {
   const formRef = useRef<HTMLFormElement>(null);
+  const [youtubeEmbedUrl, setYoutubeEmbedUrl] = useState(profile.youtube_embed_url || '');
 
   const formatUrl = (url: string | null) => {
     if (!url || url.trim() === '') return null;
@@ -31,6 +34,18 @@ export const ProfileForm = ({
       return trimmedUrl;
     }
     return `https://${trimmedUrl}`;
+  };
+
+  const handleYouTubeToggle = (enabled: boolean) => {
+    if (!enabled) {
+      setYoutubeEmbedUrl('');
+      onUpdate({ youtube_embed_url: null });
+    }
+  };
+
+  const handleYouTubeEmbedChange = (url: string) => {
+    setYoutubeEmbedUrl(url);
+    onUpdate({ youtube_embed_url: url || null });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -51,6 +66,7 @@ export const ProfileForm = ({
       twitter_url: formatUrl(formData.get('twitter_url')?.toString() || null),
       youtube_url: formatUrl(formData.get('youtube_url')?.toString() || null),
       linkedin_url: formatUrl(formData.get('linkedin_url')?.toString() || null),
+      youtube_embed_url: youtubeEmbedUrl || null,
     };
 
     onUpdate(updates);
@@ -85,6 +101,12 @@ export const ProfileForm = ({
         <BasicProfileInfo defaultValues={profile} />
         <ContactInfo defaultValues={profile} />
         <SocialMediaLinks defaultValues={profile} />
+        
+        <YouTubeEmbedSection 
+          defaultValues={profile}
+          onToggle={handleYouTubeToggle}
+          onEmbedUrlChange={handleYouTubeEmbedChange}
+        />
         
         <div className="pt-8 border-t">
           <h2 className="text-lg font-semibold mb-6">Appearance Settings</h2>

@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { Loader2, Facebook, Instagram, Linkedin, X, Youtube } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -5,6 +6,7 @@ import { ProfileHeader } from "@/components/profile/view/ProfileHeader";
 import { SaveContactButton } from "@/components/profile/view/SaveContactButton";
 import { ProfileButtons } from "@/components/profile/view/ProfileButtons";
 import { ProfileBio } from "@/components/profile/view/ProfileBio";
+import { YouTubeEmbed } from "@/components/profile/view/YouTubeEmbed";
 import { useProfileData } from "@/hooks/useProfileData";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -76,7 +78,7 @@ const ViewProfile = () => {
 
   return (
     <div 
-      className="min-h-screen p-4 pt-16 md:pt-4" // Added pt-16 for mobile and pt-4 for desktop
+      className="min-h-screen p-4 pt-16 md:pt-4"
       style={{
         backgroundColor: profile.background_color || '#15202B',
         color: profile.text_color || '#FFFFFF',
@@ -86,6 +88,7 @@ const ViewProfile = () => {
         <ProfileHeader profile={profile} />
         <SaveContactButton profile={profile} />
         <ProfileButtons profile={profile} buttons={buttons} />
+        <YouTubeEmbed profile={profile} />
         <ProfileBio bio={profile.bio} />
         
         {/* Social Media Icons */}
