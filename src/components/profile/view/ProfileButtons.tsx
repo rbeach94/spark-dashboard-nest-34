@@ -49,6 +49,14 @@ export const ProfileButtons = ({ profile, buttons }: ProfileButtonsProps) => {
           console.log('Opening phone:', button.action_value);
           window.location.href = `tel:${button.action_value}`;
           break;
+        case 'google_review':
+          console.log('Opening Google Review:', button.action_value);
+          const reviewWindow = window.open(button.action_value, '_blank', 'noopener,noreferrer');
+          if (!reviewWindow) {
+            // Fallback if popup blocked
+            window.location.href = button.action_value;
+          }
+          break;
         default:
           console.warn('Unknown button action type:', button.action_type);
       }

@@ -41,6 +41,9 @@ const Profile = () => {
       case 'call':
         window.location.href = `tel:${button.action_value}`;
         break;
+      case 'google_review':
+        window.open(button.action_value, '_blank');
+        break;
     }
   };
 
