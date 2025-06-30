@@ -111,6 +111,7 @@ export type Database = {
           updated_at: string
           user_id: string
           website: string | null
+          youtube_embed_url: string | null
           youtube_url: string | null
         }
         Insert: {
@@ -136,6 +137,7 @@ export type Database = {
           updated_at?: string
           user_id: string
           website?: string | null
+          youtube_embed_url?: string | null
           youtube_url?: string | null
         }
         Update: {
@@ -161,6 +163,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
           website?: string | null
+          youtube_embed_url?: string | null
           youtube_url?: string | null
         }
         Relationships: [
