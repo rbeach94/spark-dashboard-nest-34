@@ -34,10 +34,8 @@ export const ProfileButtons = ({ profile, buttons }: ProfileButtonsProps) => {
       switch (button.action_type) {
         case 'link':
           console.log('Opening link:', button.action_value);
-          // Use window.open for better iOS compatibility
           const newWindow = window.open(button.action_value, '_blank', 'noopener,noreferrer');
           if (!newWindow) {
-            // Fallback if popup blocked
             window.location.href = button.action_value;
           }
           break;
@@ -53,7 +51,6 @@ export const ProfileButtons = ({ profile, buttons }: ProfileButtonsProps) => {
           console.log('Opening Google Review:', button.action_value);
           const reviewWindow = window.open(button.action_value, '_blank', 'noopener,noreferrer');
           if (!reviewWindow) {
-            // Fallback if popup blocked
             window.location.href = button.action_value;
           }
           break;

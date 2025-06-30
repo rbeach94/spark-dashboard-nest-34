@@ -40,7 +40,7 @@ const SortableButton = ({ button, buttonColor, buttonTextColor, onDelete, onButt
   const handleButtonClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Button clicked:', button.id, button.label);
+    console.log('Button clicked:', button.id, button.label, button.action_type);
     try {
       onButtonClick(button);
     } catch (error) {

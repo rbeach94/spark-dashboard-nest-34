@@ -31,6 +31,8 @@ const Profile = () => {
   } = useProfileData(id);
 
   const handleButtonClick = (button: Tables<"profile_buttons">) => {
+    console.log('Handling button click:', button.action_type, button.action_value);
+    
     switch (button.action_type) {
       case 'link':
         window.open(button.action_value, '_blank');
@@ -44,6 +46,8 @@ const Profile = () => {
       case 'google_review':
         window.open(button.action_value, '_blank');
         break;
+      default:
+        console.warn('Unknown button action type:', button.action_type);
     }
   };
 
@@ -51,6 +55,8 @@ const Profile = () => {
     const label = formData.get('label')?.toString() || '';
     const action_type = formData.get('action_type')?.toString() || '';
     const action_value = formData.get('action_value')?.toString() || '';
+
+    console.log('Form submission:', { label, action_type, action_value });
 
     if (!label || !action_type || !action_value) {
       toast.error("All fields are required");
