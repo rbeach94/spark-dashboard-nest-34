@@ -20,6 +20,8 @@ interface Feedback {
   description: string;
   status: FeedbackStatus;
   created_at: string;
+  user_id: string;
+  user_email?: string;
 }
 
 export const FeedbackList = () => {
@@ -28,13 +30,36 @@ export const FeedbackList = () => {
   const { data: feedback, isLoading } = useQuery({
     queryKey: ["feedback"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all feedback
+      const { data: feedbackData, error: feedbackError } = await supabase
         .from("feedback")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      return data as Feedback[];
+      if (feedbackError) throw feedbackError;
+
+      // Get unique user IDs from feedback
+      const userIds = [...new Set(feedbackData.map(item => item.user_id))];
+      
+      // Get user profiles for these IDs
+      const { data: profilesData, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, email")
+        .in("id", userIds);
+
+      if (profilesError) throw profilesError;
+
+      // Create a map of user_id to email
+      const userEmailMap = profilesData.reduce((acc, profile) => {
+        acc[profile.id] = profile.email;
+        return acc;
+      }, {} as Record<string, string>);
+
+      // Combine feedback with user emails
+      return feedbackData.map(item => ({
+        ...item,
+        user_email: userEmailMap[item.user_id] || 'Unknown user'
+      })) as Feedback[];
     },
   });
 
@@ -73,6 +98,9 @@ export const FeedbackList = () => {
         >
           <h3 className="font-semibold">{item.title}</h3>
           <p className="text-sm text-muted-foreground">{item.description}</p>
+          <div className="text-sm text-muted-foreground mb-2">
+            <strong>User:</strong> {item.user_email}
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               {new Date(item.created_at).toLocaleDateString()}
