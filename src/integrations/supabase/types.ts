@@ -51,6 +51,7 @@ export type Database = {
           is_active: boolean | null
           is_hidden: boolean | null
           redirect_url: string | null
+          review_type: string | null
           title: string | null
           type: string
           url: string | null
@@ -66,6 +67,7 @@ export type Database = {
           is_active?: boolean | null
           is_hidden?: boolean | null
           redirect_url?: string | null
+          review_type?: string | null
           title?: string | null
           type?: string
           url?: string | null
@@ -81,6 +83,7 @@ export type Database = {
           is_active?: boolean | null
           is_hidden?: boolean | null
           redirect_url?: string | null
+          review_type?: string | null
           title?: string | null
           type?: string
           url?: string | null
@@ -357,6 +360,7 @@ export type Database = {
           is_active: boolean | null
           is_hidden: boolean | null
           redirect_url: string | null
+          review_type: string | null
           title: string | null
           type: string
           url: string | null

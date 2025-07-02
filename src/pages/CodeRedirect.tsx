@@ -46,13 +46,13 @@ const CodeRedirect = () => {
         if (nfcCode.type === 'review') {
           console.log('Review plaque detected:', nfcCode);
           
-          // If the plaque is not active or has no redirect URL
+          // If the plaque is not active or has no redirect URL, redirect to edit page
           if (!nfcCode.is_active || !nfcCode.redirect_url) {
-            console.log('Review plaque not active or no redirect URL:', { 
+            console.log('Review plaque not active or no redirect URL, redirecting to edit:', { 
               is_active: nfcCode.is_active,
               redirect_url: nfcCode.redirect_url
             });
-            navigate(`/activate/${code}`);
+            navigate(`/plaque/${code}`);
             return;
           }
 
@@ -71,7 +71,7 @@ const CodeRedirect = () => {
             }
 
             // Redirect to the plaque's redirect URL
-            console.log('Redirecting to review plaque URL:', nfcCode.redirect_url);
+            console.log(`Redirecting to ${nfcCode.review_type || 'review'} URL:`, nfcCode.redirect_url);
             window.location.href = nfcCode.redirect_url;
           } catch (error) {
             console.error('Error during visit recording:', error);

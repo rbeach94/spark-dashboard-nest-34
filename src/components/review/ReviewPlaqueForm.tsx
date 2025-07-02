@@ -16,6 +16,9 @@ export const ReviewPlaqueForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [placeId, setPlaceId] = useState("");
   const [placeName, setPlaceName] = useState("");
+  const [reviewType, setReviewType] = useState("google_review");
+  const [facebookInput, setFacebookInput] = useState("");
+  const [customUrl, setCustomUrl] = useState("");
 
   useEffect(() => {
     const fetchPlaqueData = async () => {
@@ -41,10 +44,34 @@ export const ReviewPlaqueForm = () => {
 
       if (nfcCode.title) setTitle(nfcCode.title);
       if (nfcCode.description) setDescription(nfcCode.description);
+      if (nfcCode.review_type) setReviewType(nfcCode.review_type);
+      if (nfcCode.redirect_url) {
+        if (nfcCode.review_type === 'facebook') {
+          setFacebookInput(nfcCode.redirect_url);
+        } else if (nfcCode.review_type === 'custom') {
+          setCustomUrl(nfcCode.redirect_url);
+        }
+      }
     };
 
     fetchPlaqueData();
   }, [code]);
+
+  const generateFacebookReviewUrl = (input: string): string => {
+    // If it's already a full Facebook review URL, return as-is
+    if (input.includes('facebook.com') && input.includes('/reviews')) {
+      return input;
+    }
+    
+    // If it's a full Facebook profile URL, convert to review URL
+    if (input.includes('facebook.com/')) {
+      const username = input.split('/').pop();
+      return `https://www.facebook.com/${username}/reviews`;
+    }
+    
+    // If it's just a username, create the review URL
+    return `https://www.facebook.com/${input}/reviews`;
+  };
 
   const handlePlaceSelect = async (placeId: string, placeName: string) => {
     try {
@@ -56,18 +83,7 @@ export const ReviewPlaqueForm = () => {
         return;
       }
 
-      const { data: { GOOGLE_PLACES_API_KEY }, error: secretError } = await supabase
-        .functions.invoke('get-secret', {
-          body: { name: 'GOOGLE_PLACES_API_KEY' }
-        });
-
-      if (secretError) {
-        console.error("Error fetching API key:", secretError);
-        toast.error("Error setting up review link");
-        return;
-      }
-
-      const reviewUrl = `https://places.googleapis.com/v1/places/${placeId}?fields=id&key=${GOOGLE_PLACES_API_KEY}`;
+      const reviewUrl = `https://search.google.com/local/writereview?placeid=${placeId}`;
       setPlaceId(placeId);
       setPlaceName(placeName);
       setTitle(`Review ${placeName}`);
@@ -82,6 +98,33 @@ export const ReviewPlaqueForm = () => {
     e.preventDefault();
     if (!code) return;
 
+    // Generate redirect URL based on review type
+    let redirectUrl = "";
+    
+    switch (reviewType) {
+      case "google_review":
+        if (!placeId) {
+          toast.error("Please select a business for Google Review");
+          return;
+        }
+        redirectUrl = `https://search.google.com/local/writereview?placeid=${placeId}`;
+        break;
+      case "facebook":
+        if (!facebookInput.trim()) {
+          toast.error("Please enter Facebook username or URL");
+          return;
+        }
+        redirectUrl = generateFacebookReviewUrl(facebookInput.trim());
+        break;
+      case "custom":
+        if (!customUrl.trim()) {
+          toast.error("Please enter a custom review URL");
+          return;
+        }
+        redirectUrl = customUrl.trim();
+        break;
+    }
+
     setIsLoading(true);
     try {
       const { error } = await supabase
@@ -90,6 +133,9 @@ export const ReviewPlaqueForm = () => {
           title,
           description,
           type: "review",
+          review_type: reviewType,
+          redirect_url: redirectUrl,
+          is_active: true,
         })
         .eq("code", code);
 
@@ -114,9 +160,63 @@ export const ReviewPlaqueForm = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label>Business Search</Label>
-              <PlaceSearch onPlaceSelect={handlePlaceSelect} />
+              <Label htmlFor="reviewType">Review Type</Label>
+              <select
+                id="reviewType"
+                value={reviewType}
+                onChange={(e) => setReviewType(e.target.value)}
+                className="w-full p-2 rounded border text-black"
+                required
+              >
+                <option value="google_review">Google Review</option>
+                <option value="facebook">Facebook Review</option>
+                <option value="custom">Custom URL</option>
+              </select>
             </div>
+
+            {reviewType === "google_review" && (
+              <div className="space-y-2">
+                <Label>Business Search</Label>
+                <PlaceSearch onPlaceSelect={handlePlaceSelect} />
+                {placeName && (
+                  <div className="p-2 bg-green-50 rounded border text-green-800 text-sm">
+                    Selected: {placeName}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {reviewType === "facebook" && (
+              <div className="space-y-2">
+                <Label htmlFor="facebookInput">Facebook Username or Profile URL</Label>
+                <Input
+                  id="facebookInput"
+                  value={facebookInput}
+                  onChange={(e) => setFacebookInput(e.target.value)}
+                  placeholder="e.g., mybusiness or https://www.facebook.com/mybusiness"
+                  required
+                />
+                <p className="text-sm text-gray-600">
+                  Enter your Facebook username or full profile URL. We'll generate the review link for you.
+                </p>
+              </div>
+            )}
+
+            {reviewType === "custom" && (
+              <div className="space-y-2">
+                <Label htmlFor="customUrl">Custom Review URL</Label>
+                <Input
+                  id="customUrl"
+                  value={customUrl}
+                  onChange={(e) => setCustomUrl(e.target.value)}
+                  placeholder="https://example.com/reviews"
+                  required
+                />
+                <p className="text-sm text-gray-600">
+                  Enter any URL where customers can leave reviews.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="title">Title</Label>
